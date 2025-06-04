@@ -41,11 +41,11 @@ const beginnerVideos = [
         url: "https://www.youtube.com/watch?v=PkZNo7MFNFg",
         videoId: "PkZNo7MFNFg",
       },
-      {
-        title: "JavaScript Tutorial Full Course - Beginner to Pro",
-        url: "https://www.youtube.com/watch?v=EerdGm-ehJQ",
-        videoId: "EerdGm-ehJQ",
-      },
+      // {
+      //   title: "JavaScript Tutorial Full Course - Beginner to Pro",
+      //   url: "https://www.youtube.com/watch?v=EerdGm-ehJQ",
+      //   videoId: "EerdGm-ehJQ",
+      // },
     ],
   },
   {
@@ -293,6 +293,72 @@ const levels = [
   { value: "advanced", label: "Advanced", videos: advancedVideos },
 ];
 
+const beginnerSingleVideos = [
+  {
+    topic: "HTML",
+    video: {
+      title: "HTML Full Course for Beginners | Complete All-in-One Tutorial",
+      videoId: "mJgBOIoGihA",
+    },
+  },
+  {
+    topic: "CSS",
+    video: {
+      title: "CSS Full Course for Beginners | Complete All-in-One Tutorial",
+      videoId: "n4R2E7O-Ngo",
+    },
+  },
+  {
+    topic: "JavaScript",
+    video: {
+      title: "Learn JavaScript - Full Course for Beginners",
+      videoId: "PkZNo7MFNFg",
+    },
+  },
+  {
+    topic: "Node.js",
+    video: {
+      title: "Node.js Full Course for Beginners | Complete All-in-One Tutorial",
+      videoId: "f2EqECiTBL8",
+    },
+  },
+  {
+    topic: "Express.js",
+    video: {
+      title: "Express.js & Node.js Course for Beginners - Full Tutorial",
+      videoId: "G8uL0lFFoN0",
+    },
+  },
+  {
+    topic: "React",
+    video: {
+      title:
+        "React JS Full Course for Beginners | Complete All-in-One Tutorial",
+      videoId: "Ke90Tje7VS0",
+    },
+  },
+  {
+    topic: "MongoDB",
+    video: {
+      title: "MongoDB Tutorial For Beginners | Full Course",
+      videoId: "Www6cTUymCY",
+    },
+  },
+];
+
+function YouTubeEmbed({ videoId }) {
+  return (
+    <div className="video-container">
+      <iframe
+        src={`https://www.youtube.com/embed/${videoId}`}
+        title="YouTube tutorial"
+        allowFullScreen
+        frameBorder="0"
+      />
+    </div>
+  );
+}
+
 function App() {
   const [level, setLevel] = useState("beginner");
   const [completedVideos, setCompletedVideos] = useState({});
@@ -302,6 +368,55 @@ function App() {
     // Persist dark mode preference
     return localStorage.getItem("darkMode") === "true";
   });
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [user, setUser] = useState(null);
+  const [authMode, setAuthMode] = useState("login"); // "login" or "register"
+  const [authForm, setAuthForm] = useState({ email: "", password: "" });
+  const [authError, setAuthError] = useState("");
+
+  // Simple localStorage-based authentication for demo
+  useEffect(() => {
+    const savedUser = localStorage.getItem("ademyUser");
+    if (savedUser) setUser(JSON.parse(savedUser));
+  }, []);
+
+  const handleAuthInput = (e) => {
+    setAuthForm({ ...authForm, [e.target.name]: e.target.value });
+  };
+
+  const handleAuth = (e) => {
+    e.preventDefault();
+    setAuthError("");
+    if (!authForm.email || !authForm.password) {
+      setAuthError("Email and password are required.");
+      return;
+    }
+    if (authMode === "register") {
+      if (localStorage.getItem(`ademyUser:${authForm.email}`)) {
+        setAuthError("User already exists.");
+        return;
+      }
+      localStorage.setItem(`ademyUser:${authForm.email}`, JSON.stringify(authForm));
+    }
+    const stored = localStorage.getItem(`ademyUser:${authForm.email}`);
+    if (!stored) {
+      setAuthError("User not found. Please register.");
+      return;
+    }
+    const storedUser = JSON.parse(stored);
+    if (storedUser.password !== authForm.password) {
+      setAuthError("Incorrect password.");
+      return;
+    }
+    setUser({ email: authForm.email });
+    localStorage.setItem("ademyUser", JSON.stringify({ email: authForm.email }));
+    setAuthForm({ email: "", password: "" });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem("ademyUser");
+  };
 
   useEffect(() => {
     if (darkMode) {
@@ -313,6 +428,12 @@ function App() {
     }
     localStorage.setItem("darkMode", darkMode);
   }, [darkMode]);
+
+  // Load completed videos from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem("completedVideos");
+    if (stored) setCompletedVideos(JSON.parse(stored));
+  }, []);
 
   const currentLevel = levels.find((l) => l.value === level);
   const topics = currentLevel ? currentLevel.videos : [];
@@ -345,23 +466,99 @@ function App() {
     setSelectedVideoIdx(0);
   };
 
+  // Progress calculation
+  const totalVideos = topics.reduce((sum, t) => sum + t.videos.length, 0);
+  const completedCount = Object.values(completedVideos).filter(Boolean).length;
+  const progress = totalVideos
+    ? Math.round((completedCount / totalVideos) * 100)
+    : 0;
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
+        <form
+          onSubmit={handleAuth}
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-xs flex flex-col gap-4"
+        >
+          <h2 className="text-lg font-bold text-indigo-600 dark:text-indigo-300 text-center mb-2">
+            {authMode === "login" ? "Login" : "Register"}
+          </h2>
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={authForm.email}
+            onChange={handleAuthInput}
+            className="p-2 rounded border dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
+            autoComplete="username"
+            required
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={authForm.password}
+            onChange={handleAuthInput}
+            className="p-2 rounded border dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
+            autoComplete={authMode === "login" ? "current-password" : "new-password"}
+            required
+          />
+          {authError && (
+            <div className="text-red-500 text-xs text-center">{authError}</div>
+          )}
+          <button
+            type="submit"
+            className="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded py-2 transition"
+          >
+            {authMode === "login" ? "Login" : "Register"}
+          </button>
+          <button
+            type="button"
+            className="text-xs text-indigo-600 dark:text-indigo-300 underline mt-1"
+            onClick={() => {
+              setAuthMode(authMode === "login" ? "register" : "login");
+              setAuthError("");
+            }}
+          >
+            {authMode === "login"
+              ? "Don't have an account? Register"
+              : "Already have an account? Login"}
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div
-      className={`min-h-screen flex flex-col ${
+      className={`min-h-screen flex flex-col transition-colors duration-300 overflow-x-hidden ${
         darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-gray-900"
       }`}
+      style={{ width: "100vw", maxWidth: "100vw" }}
     >
-      <header
-        className={`bg-white dark:bg-gray-800 shadow py-4 px-8 flex items-center justify-between`}
-      >
-        <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+      <header className="bg-white dark:bg-gray-800 shadow py-2 px-2 sm:py-3 sm:px-4 md:px-8 flex items-center justify-between w-full">
+        <h1 className="text-base sm:text-lg md:text-2xl font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+          <span role="img" aria-label="logo">
+            📚
+          </span>{" "}
           FullStack Study Assistant
         </h1>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
+          <span className="text-xs sm:text-sm md:text-base font-semibold text-indigo-600 dark:text-indigo-300 mr-2">
+            {user.email}
+          </span>
+          <button
+            onClick={handleLogout}
+            className="px-2 py-1 rounded bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-200 border border-red-200 dark:border-red-700 transition text-xs sm:text-sm md:text-base"
+            aria-label="Logout"
+            title="Logout"
+          >
+            Logout
+          </button>
           <select
             value={level}
             onChange={handleLevelSelect}
-            className="p-2 border rounded-md dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
+            className="p-1 sm:p-2 border rounded-md dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 text-xs sm:text-sm md:text-base"
           >
             {levels.map((l) => (
               <option key={l.value} value={l.value}>
@@ -371,49 +568,110 @@ function App() {
           </select>
           <button
             onClick={() => setDarkMode((d) => !d)}
-            className="ml-2 px-3 py-1 rounded bg-gray-200 dark:bg-gray-700 dark:text-gray-100 border dark:border-gray-600 transition"
+            className="ml-1 md:ml-2 px-2 md:px-3 py-1 rounded bg-gray-200 dark:bg-gray-700 dark:text-gray-100 border dark:border-gray-600 transition text-xs sm:text-sm md:text-base"
             aria-label="Toggle dark mode"
             title="Toggle dark mode"
           >
-            {darkMode ? "🌙 Dark" : "☀️ Light"}
+            {darkMode ? "🌙" : "☀️"}
+          </button>
+          <button
+            onClick={() => setSidebarOpen((open) => !open)}
+            className="ml-1 md:ml-2 px-2 py-1 rounded bg-indigo-100 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-700 transition md:hidden"
+            aria-label="Toggle sidebar"
+            title="Toggle sidebar"
+          >
+            {sidebarOpen ? "✖" : "☰"}
           </button>
         </div>
       </header>
-      <div className="flex flex-1">
+      <div className="flex flex-1 flex-col md:flex-row-reverse w-full">
         {/* Sidebar */}
-        <aside className="w-72 bg-white dark:bg-gray-800 border-r dark:border-gray-700 p-4 overflow-y-auto">
-          <h2 className="font-bold text-lg mb-4">Course Curriculum</h2>
+        <aside
+          className={`
+          fixed md:sticky md:top-0 top-0 right-0 h-full md:h-auto w-80 bg-white dark:bg-gray-800 border-l dark:border-gray-700 p-3 sm:p-4 z-30
+          transform transition-transform duration-300
+          ${sidebarOpen ? "translate-x-0" : "translate-x-full"}
+          md:static md:translate-x-0 md:w-96 md:flex
+          overflow-y-auto
+        `}
+          style={{
+            minWidth: "20rem",
+            maxWidth: "100vw",
+            maxHeight: "100vh",
+            wordBreak: "break-word",
+          }}
+        >
+          <div className="flex items-center justify-between mb-3 sm:mb-4 md:mb-6">
+            <h2 className="font-bold text-sm sm:text-base md:text-lg">
+              Course Curriculum
+            </h2>
+            <button
+              className="md:hidden text-gray-600 dark:text-gray-300"
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Close sidebar"
+            >
+              ✖
+            </button>
+          </div>
+          <div className="mb-3 sm:mb-4">
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 sm:h-3">
+              <div
+                className="bg-indigo-500 h-2 sm:h-3 rounded-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
+            <div className="text-xs mt-1 text-right text-indigo-500 dark:text-indigo-300">
+              Progress: {progress}%
+            </div>
+          </div>
           <ul>
             {topics.map((topic, tIdx) => (
               <li key={topic.topic} className="mb-2">
                 <div
-                  className={`cursor-pointer px-2 py-1 rounded font-semibold ${
+                  className={`cursor-pointer px-2 py-1 rounded font-semibold flex items-center gap-2 break-words whitespace-normal ${
                     tIdx === selectedTopicIdx
                       ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200"
                       : "hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
+                  style={{ wordBreak: "break-word", maxWidth: "100%" }}
                   onClick={() => handleTopicSelect(tIdx)}
                 >
-                  {topic.topic}
+                  <span className="text-base sm:text-lg">📂</span>
+                  <span className="break-words whitespace-normal">
+                    {topic.topic}
+                  </span>
                 </div>
                 <ul className="ml-4 mt-1">
                   {topic.videos.map((video, vIdx) => (
                     <li
                       key={video.videoId || video.url}
-                      className={`flex items-center cursor-pointer px-2 py-1 rounded text-sm ${
+                      className={`flex items-center cursor-pointer px-2 py-1 rounded text-xs sm:text-sm gap-2 transition break-words whitespace-normal ${
                         tIdx === selectedTopicIdx && vIdx === selectedVideoIdx
                           ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-800 dark:text-indigo-200"
                           : "hover:bg-gray-50 dark:hover:bg-gray-700"
                       }`}
+                      style={{
+                        wordBreak: "break-word",
+                        maxWidth: "12rem",
+                        whiteSpace: "normal",
+                        overflowWrap: "break-word",
+                      }}
                       onClick={() => {
                         setSelectedTopicIdx(tIdx);
                         setSelectedVideoIdx(vIdx);
+                        if (window.innerWidth < 768) setSidebarOpen(false);
                       }}
                     >
-                      <span className="mr-2">
-                        {completedVideos[video.videoId] ? "✅" : "▶️"}
+                      <span>
+                        {completedVideos[video.videoId] ? (
+                          <span className="text-green-500">✔️</span>
+                        ) : (
+                          <span className="text-indigo-400">▶️</span>
+                        )}
                       </span>
-                      {video.title}
+                      <span className="break-words whitespace-normal">
+                        {video.title}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -421,22 +679,47 @@ function App() {
             ))}
           </ul>
         </aside>
+        {/* Overlay for mobile sidebar */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-30 z-20 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          ></div>
+        )}
         {/* Main Content */}
-        <main className="flex-1 p-8 flex flex-col items-center bg-gray-50 dark:bg-gray-900">
+        <main className="flex-1 p-2 sm:p-3 md:p-8 flex flex-col items-center bg-gray-50 dark:bg-gray-900 transition-colors duration-300 w-full overflow-x-hidden">
           {selectedVideo && (
-            <div className="w-full max-w-2xl">
-              <h2 className="text-xl font-bold mb-2">{selectedVideo.title}</h2>
+            <div className="w-full max-w-2xl animate-fadein">
+              <h2 className="text-base sm:text-lg md:text-xl font-bold mb-2 flex items-center gap-2">
+                <span role="img" aria-label="video">
+                  🎬
+                </span>
+                {selectedVideo.title}
+              </h2>
               {selectedVideo.videoId ? (
-                <iframe
-                  width="100%"
-                  height="400"
-                  src={`https://www.youtube.com/embed/${selectedVideo.videoId}`}
-                  title={selectedVideo.title}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="rounded-lg shadow"
-                ></iframe>
+                <div className="relative group">
+                  <div className="video-container">
+                    <iframe
+                      src={`https://www.youtube.com/embed/${selectedVideo.videoId}`}
+                      title={selectedVideo.title}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="rounded-lg shadow transition-transform duration-300 group-hover:scale-105"
+                    ></iframe>
+                  </div>
+                  <button
+                    className={`absolute top-2 right-2 px-2 py-1 rounded bg-white/80 dark:bg-gray-800/80 text-xs border border-gray-300 dark:border-gray-700 shadow transition hover:bg-indigo-100 dark:hover:bg-indigo-900`}
+                    onClick={() =>
+                      window.open(
+                        `https://www.youtube.com/watch?v=${selectedVideo.videoId}`,
+                        "_blank"
+                      )
+                    }
+                  >
+                    Open in YouTube ↗
+                  </button>
+                </div>
               ) : (
                 <a
                   href={selectedVideo.url}
@@ -447,20 +730,20 @@ function App() {
                   Watch on YouTube (Playlist)
                 </a>
               )}
-              <p className="mt-4 text-gray-700 dark:text-gray-200">
+              <p className="mt-4 text-gray-700 dark:text-gray-200 text-xs sm:text-sm md:text-base">
                 {selectedVideo.description}
               </p>
               {selectedVideo.videoId && (
                 <button
-                  className={`mt-4 px-4 py-2 rounded ${
+                  className={`mt-4 px-4 py-2 rounded font-semibold shadow transition text-xs sm:text-sm md:text-base ${
                     completedVideos[selectedVideo.videoId]
                       ? "bg-green-500 text-white"
-                      : "bg-indigo-200 dark:bg-indigo-700 dark:text-white"
+                      : "bg-indigo-200 dark:bg-indigo-700 dark:text-white hover:bg-indigo-300 dark:hover:bg-indigo-600"
                   }`}
                   onClick={() => toggleCompleted(selectedVideo.videoId)}
                 >
                   {completedVideos[selectedVideo.videoId]
-                    ? "Completed"
+                    ? "✅ Completed"
                     : "Mark as Completed"}
                 </button>
               )}
@@ -473,3 +756,14 @@ function App() {
 }
 
 export default App;
+
+/* Add this to your App.css for a fade-in animation: */
+/*
+@keyframes fadein {
+  from { opacity: 0; transform: translateY(24px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+.animate-fadein {
+  animation: fadein 0.6s cubic-bezier(.4,0,.2,1);
+}
+*/
