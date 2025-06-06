@@ -11,7 +11,7 @@
   },
   "server": {
     "proxy": {
-      "/api": "http://localhost:5000"
+      "/api": "https://student-guide-backend.onrender.com"
     }
   },
   "dependencies": {
