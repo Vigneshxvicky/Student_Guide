@@ -24,16 +24,16 @@ import AdminPage from "./pages/AdminPage"; // Import AdminPage
 import ProtectedRouteAdmin from "./components/ProtectedRouteAdmin"; // Import ProtectedRouteAdmin
 
 import AdminLoginRequiredPage from "./pages/AdminLoginRequiredPage"; // Import AdminLoginRequiredPage
-import ReactGA from 'react-ga4';
-function GAListener() {
-  const location = useLocation();
+// import ReactGA from 'react-ga4';
+// function GAListener() {
+//   const location = useLocation();
 
-  useEffect(() => {
-    ReactGA.send({ hitType: 'pageview', page: location.pathname + location.search });
-  }, [location]);
+//   useEffect(() => {
+//     ReactGA.send({ hitType: 'pageview', page: location.pathname + location.search });
+//   }, [location]);
 
-  return null;
-}
+//   return null;
+// }
 // Hardcoded best beginner videos for each topic
 const beginnerVideos = [
   {
@@ -1002,7 +1002,7 @@ function App() {
       {/* Main Content Area controlled by Routes */}
       <div className="flex-1 flex mt-16"> {/* Added mt-16 to offset fixed header */}
         <Routes>
-          <GAListener />
+          {/* <GAListener /> */}
           {/* Route for the main dashboard content */}
           {/* DashboardContent includes its own Main and Sidebar */}
           <Route path="/" element={
