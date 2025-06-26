@@ -1,11 +1,33 @@
-import axios from "axios";
+// Assuming this file already exists with login and register functions
+// If not, create it with the following content:
 
-export async function login(authForm) {
-  const response = await axios.post("https://student-guide-backend.onrender.com/api/login", authForm);
-  return response.data;
-}
+import axios from 'axios';
 
-export async function register(authForm) {
-  const response = await axios.post("https://student-guide-backend.onrender.com/api/register", authForm);
-  return response.data;
-}
+const API_URL = 'http://localhost:5000/api'; // Adjust if your backend URL is different
+
+export const login = async (credentials) => {
+  try {
+    const response = await axios.post(`${API_URL}/login`, credentials);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const register = async (userData) => {
+  try {
+    const response = await axios.post(`${API_URL}/register`, userData);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const googleLogin = async (idToken) => {
+  try {
+    const response = await axios.post(`${API_URL}/auth/google`, { id_token: idToken });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
