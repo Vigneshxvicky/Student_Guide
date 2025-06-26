@@ -29,6 +29,13 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
+app.get('/api/test', async (req, res) => {
+  try {
+    res.json({ message: "Backend is working and connected to MongoDB!" });
+  } catch (error) {
+    res.status(500).json({ error: "Something went wrong." });
+  }
+});
 // Auth routes
 app.post('/api/register', async (req, res) => {
   try {

@@ -1,0 +1,22 @@
+version: '3'
+services:
+  backend:
+    build: ./ademy-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGO_URL=mongodb://mongo:27017/ademy
+    depends_on:
+      - mongo
+
+  frontend:
+    build: ./ademy-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"

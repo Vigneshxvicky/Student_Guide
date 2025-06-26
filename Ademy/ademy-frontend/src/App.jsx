@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 // import axios from "axios"; // Not used
 import { Routes, Route, Navigate, Link } from "react-router-dom"; // Import Link
 import "./App.css";
@@ -24,6 +24,8 @@ import AdminPage from "./pages/AdminPage"; // Import AdminPage
 import ProtectedRouteAdmin from "./components/ProtectedRouteAdmin"; // Import ProtectedRouteAdmin
 
 import AdminLoginRequiredPage from "./pages/AdminLoginRequiredPage"; // Import AdminLoginRequiredPage
+// import CourseChoicePage from "./pages/CourseChoicePage";
+
 // import ReactGA from 'react-ga4';
 // function GAListener() {
 //   const location = useLocation();
@@ -360,12 +362,12 @@ const levels = [
 ];
 
 
-function YouTubeEmbed({ videoId }) {
+const YouTubeEmbed = React.memo(function YouTubeEmbed({ videoId }) {
     const videoSrc = `https://www.youtube.com/embed/${videoId}`;
 
   // if (!videoId) return null; // Handle cases where videoId might be null
   return (
-    <>
+    <> {/* Reduced mb-4 to mb-2 */}
       <div className="aspect-w-16 aspect-h-9 mb-2"> {/* Reduced mb-4 to mb-2 */}
         <iframe
           src={videoSrc}
@@ -380,19 +382,33 @@ function YouTubeEmbed({ videoId }) {
       </p>
     </>
   );
-}
+});
+
+// Course Card Component (with optional description and video count)
+const CourseCard = React.memo(({ title, icon, description, videoCount, onClick }) => (
+  <div
+    onClick={onClick}
+    className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col items-center text-center"
+  >
+    <span className="text-5xl mb-4">{icon}</span>
+    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+      {title}
+    </h3>
+    {description && (
+      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{description}</p>
+    )}
+    {videoCount !== undefined && (
+      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+        {videoCount} videos
+      </p>
+    )}
+  </div>
+));
 
 // Component for the main dashboard content (Sidebar, Main Video/Notes)
 // Header is now part of the main App component
-const DashboardContent = ({
-  level, setLevel, completedVideos, /* setCompletedVideos, // Handled by App */
-  selectedTopicIdx, /* setSelectedTopicIdx, // Handled by App */ selectedVideoIdx, /* setSelectedVideoIdx, // Handled by App */
-  /* darkMode, setDarkMode, // Handled by App */
-  sidebarOpen, /* setSidebarOpen, // Handled by App */
-  /* user, setUser, // Handled by App */
-  /* profileMenuOpen, setProfileMenuOpen, editingUsername, setEditingUsername, // Handled by App */
-  /* newUsername, setNewUsername, lastActive, setLastActive, streak, setStreak, xp, setXp, // Handled by App */
-  quote, /* setQuote, // Handled by App */
+const DashboardContent = React.memo(({
+  level, setLevel, completedVideos, selectedTopicIdx, selectedVideoIdx, sidebarOpen, quote,
   /* profileMenuRef, // Handled by App */ bookmarkedVideos, /* setBookmarkedVideos, // Handled by App */ videoNotes, /* setVideoNotes, // Handled by App */
   currentNoteText, setCurrentNoteText, currentNoteTimestamp, setCurrentNoteTimestamp,
   /* handleLogout, handleUsernameSave, // Handled by App */ toggleCompleted, toggleBookmark, handleAddNote, handleDeleteNote,
@@ -413,10 +429,10 @@ const DashboardContent = ({
               <div className="flex space-x-3">
                 <button
                   onClick={() => toggleCompleted(selectedVideo.videoId)}
-                  className={`px-4 py-2 rounded-lg font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
+                  className={`px-4 py-2 rounded-lg font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 ${
                     completedVideos[selectedVideo.videoId]
                       ? "bg-green-500 hover:bg-green-600"
-                      : "bg-indigo-500 hover:bg-indigo-600"
+                      : "bg-purple-600 hover:bg-purple-700"
                   } text-white`}
                 >
                   {completedVideos[selectedVideo.videoId]
@@ -460,7 +476,7 @@ const DashboardContent = ({
                 />
                 <button
                   onClick={() => handleAddNote(selectedVideo.videoId)}
-                  className="mt-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold shadow transition-colors"
+                  className="mt-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold shadow transition-colors"
                 >
                   Add Note
                 </button>
@@ -484,7 +500,7 @@ const DashboardContent = ({
               </div>
             </div>
           )}
-          <div className="mb-2 text-center text-indigo-500 dark:text-indigo-200 font-semibold italic">
+          <div className="mb-2 text-center text-purple-600 dark:text-purple-300 font-semibold italic">
             {quote}
           </div>
           {/* TODO: Consider adding a section/tab to display bookmarked videos */}
@@ -501,15 +517,15 @@ const DashboardContent = ({
           {/* Level Selector */}
           <div className="relative w-full pb-1.5  ">
             <select
-              value={level}
+              value={level} // The value should be the current level state
               onChange={handleLevelSelect}
-              className="block appearance-none w-full p-3 pr-10 text-lg rounded-lg border border-gray-300 dark:border-gray-600 bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg backdrop-blur-md cursor-pointer transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-500"
+              className="block appearance-none w-full p-3 pr-10 text-lg rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer transition-all"
             >
               {levels.map((l) => (
                 <option
                   key={l.value}
                   value={l.value}
-                  className="bg-gray-800 text-white"
+                  className="bg-white text-gray-900 dark:bg-gray-800 dark:text-white" // Ensure option text is visible in light mode
                 >
                   {l.label}
                 </option>
@@ -517,7 +533,7 @@ const DashboardContent = ({
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
               <svg
-                className="w-6 h-6 text-white transition-transform duration-300 ease-in-out transform select-none"
+                className="w-6 h-6 text-gray-400 dark:text-gray-300 transition-transform duration-300 ease-in-out transform select-none"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -536,7 +552,7 @@ const DashboardContent = ({
           <div className="mb-4">
             <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
               <div
-                className="h-2 bg-gradient-to-r from-indigo-400 to-pink-400 rounded-full transition-all duration-500"
+                className="h-2 bg-purple-600 rounded-full transition-all duration-500"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -552,9 +568,9 @@ const DashboardContent = ({
                 <button
                   onClick={() => handleTopicSelect(tIdx)}
                   className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${
-                    tIdx === selectedTopicIdx
-                      ? "bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 shadow"
-                      : "hover:bg-indigo-50 dark:hover:bg-gray-700"
+                    selectedTopicIdx === tIdx
+                      ? "bg-purple-100 dark:bg-purple-800 text-purple-700 dark:text-purple-100 shadow"
+                      : "hover:bg-purple-50 dark:hover:bg-purple-700/60"
                   }`}
                 >
                   {topic.topic}
@@ -566,14 +582,14 @@ const DashboardContent = ({
       </aside>
     </>
   );
-};
+});
 
 
 function App() {
   // All state variables are managed here in the top-level App component
   const [level, setLevel] = useState("beginner");
   const [completedVideos, setCompletedVideos] = useState({});
-  const [selectedTopicIdx, setSelectedTopicIdx] = useState(0);
+  const [selectedTopicIdx, setSelectedTopicIdx] = useState(null);
   const [selectedVideoIdx, setSelectedVideoIdx] = useState(0);
   const [darkMode, setDarkMode] = useState(() => {
     return (
@@ -609,6 +625,7 @@ function App() {
   // State for the current note input
   const [currentNoteText, setCurrentNoteText] = useState("");
   const [currentNoteTimestamp, setCurrentNoteTimestamp] = useState("");
+  const [selectedMainTopic, setSelectedMainTopic] = useState(null); // New state
 
   // Simple localStorage-based authentication for demo
   useEffect(() => {
@@ -696,7 +713,9 @@ function App() {
     setAuthError("");
     try {
       const data =
-        authMode === "login" ? await login(authForm) : await register(authForm);
+        authMode === "login"
+          ? await login(authForm)
+          : await register(authForm);
       setUser(data.user); // Assuming data.user contains the user object
       localStorage.setItem("ademyUser", JSON.stringify(data.user)); // Save user object
       localStorage.setItem("ademyToken", data.token);
@@ -706,72 +725,87 @@ function App() {
     }
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    // Clear user-specific data from state/localStorage on logout
+  const handleLogout = useCallback(() => {
+    setUser(null); // Triggers re-render, other states will be reset based on !user
     localStorage.removeItem("ademyUser");
     localStorage.removeItem("ademyToken");
+    // For states managed by useState, explicitly reset them
     setCompletedVideos({});
-    localStorage.removeItem("completedVideos");
+    localStorage.removeItem("completedVideos"); // Also clear localStorage directly
     setBookmarkedVideos({});
     localStorage.removeItem("bookmarkedVideos");
-    setVideoNotes({});
-    localStorage.removeItem("videoNotes"); // useLocalStorage handles saving, but clear on logout
+    setVideoNotes({}); // This will be handled by useLocalStorage to clear its storage too
     setStreak(0);
-    localStorage.setItem("streak", 0);
+    localStorage.setItem("streak", "0");
     setXp(0);
-    localStorage.setItem("xp", 0);
+    localStorage.setItem("xp", "0");
     setLastActive(null);
-
-    // navigate('/'); // Requires useNavigate hook from react-router-dom
-  };
+    localStorage.removeItem("lastActive");
+    // No need to navigate, the app will show login screen due to !user
+  }, [setVideoNotes]); // setVideoNotes from useLocalStorage might be stable, but include if it's not guaranteed
 
   // Username update handler
-  const handleUsernameSave = async () => {
+  const handleUsernameSave = useCallback(async () => {
     if (!newUsername.trim()) return;
     try {
       const ok = await updateUsername(newUsername);
       if (ok) {
-        setUser((u) => ({ ...u, username: newUsername }));
-        localStorage.setItem("ademyUser", JSON.stringify({ ...user, username: newUsername })); // Update user in localStorage
+        setUser((prevUser) => {
+          const updatedUser = { ...prevUser, username: newUsername };
+          localStorage.setItem("ademyUser", JSON.stringify(updatedUser));
+          return updatedUser;
+        });
         setEditingUsername(false);
       }
     } catch (err) {
       console.error("Failed to update username:", err);
+      // Optionally set an error state here to inform the user
     }
-  };
+  }, [newUsername, setUser, setEditingUsername]); // user removed as it's accessed via functional update
 
   // Mark video as completed
-  const toggleCompleted = (videoId) => {
+  const toggleCompleted = useCallback((videoId) => {
     const wasCompleted = completedVideos[videoId]; // Check if it was completed before this toggle
 
-    setCompletedVideos(prev => { // Use functional update for safety
+    setCompletedVideos(prev => {
       const updated = { ...prev, [videoId]: !prev[videoId] };
-      localStorage.setItem("completedVideos", JSON.stringify(updated)); // Ensure saving to localStorage
+      localStorage.setItem("completedVideos", JSON.stringify(updated));
       return updated;
     });
 
-    // XP: +10 for new completion
-    if (!wasCompleted) { // Only award XP if marking as complete for the first time
+    if (!wasCompleted) {
       setXp((x) => {
         const newXp = x + 10;
-        localStorage.setItem("xp", newXp);
+        localStorage.setItem("xp", String(newXp));
         return newXp;
       });
     }
 
     // Confetti on completing ALL videos
-    const currentLevelVideos = levels.find(l => l.value === level)?.videos || [];
-    const totalVideosInCurrentLevel = currentLevelVideos.reduce((sum, t) => sum + t.videos.length, 0);
-     const updatedCompletedCount = Object.values({ ...completedVideos, [videoId]: !completedVideos[videoId] }).filter(Boolean).length;
+    // This logic needs access to `topics` which is derived below.
+    // For simplicity, we might not put confetti logic inside useCallback if it complicates dependencies too much,
+    // or we pass necessary derived data to this callback.
+    // Let's assume `level` and `completedVideos` are sufficient for now.
+    // The confetti logic might be better placed in a useEffect hook watching completedVideos and level.
+    // However, to keep it here:
+    const currentLevelConfettiData = levels.find(l => l.value === level);
+    if (currentLevelConfettiData) {
+      const topicsForConfetti = currentLevelConfettiData.videos;
+      const totalVideosInCurrentLevelForConfetti = topicsForConfetti.reduce((sum, t) => sum + t.videos.length, 0);
+      // Check against the *new* state of completedVideos
+      const newCompletedState = { ...completedVideos, [videoId]: !completedVideos[videoId] };
+      const completedCountForConfetti = Object.keys(newCompletedState).filter(vidId =>
+        topicsForConfetti.some(topic => topic.videos.some(video => video.videoId === vidId)) && newCompletedState[vidId]
+      ).length;
 
-    if (!wasCompleted && updatedCompletedCount === totalVideosInCurrentLevel && totalVideosInCurrentLevel > 0) { // Added check for totalVideos > 0
-       confetti();
+      if (!wasCompleted && completedCountForConfetti === totalVideosInCurrentLevelForConfetti && totalVideosInCurrentLevelForConfetti > 0) {
+        confetti();
+      }
     }
-  };
+  }, [completedVideos, level, setCompletedVideos, setXp]); // `levels` is stable
 
   // Toggle bookmark status for a video
-  const toggleBookmark = (videoId) => {
+  const toggleBookmark = useCallback((videoId) => {
     setBookmarkedVideos(prev => {
       const updatedBookmarks = {
         ...prev,
@@ -780,10 +814,10 @@ function App() {
       localStorage.setItem("bookmarkedVideos", JSON.stringify(updatedBookmarks));
       return updatedBookmarks;
     });
-  };
+  }, [setBookmarkedVideos]);
 
   // Add a note to the current video
-  const handleAddNote = (videoId) => {
+  const handleAddNote = useCallback((videoId) => {
     if (!videoId || !currentNoteText.trim()) return;
     const newNote = {
       id: Date.now().toString(), // Simple unique ID
@@ -800,10 +834,10 @@ function App() {
     });
     setCurrentNoteText("");
     setCurrentNoteTimestamp("");
-  };
+  }, [currentNoteText, currentNoteTimestamp, setVideoNotes, setCurrentNoteText, setCurrentNoteTimestamp]);
 
   // Delete a note from a video
-  const handleDeleteNote = (videoId, noteId) => {
+  const handleDeleteNote = useCallback((videoId, noteId) => {
     setVideoNotes((prevNotes) => {
       const updatedNotes = {
         ...prevNotes,
@@ -812,43 +846,64 @@ function App() {
        // useLocalStorage hook handles saving to localStorage
       return updatedNotes;
     });
-  };
+  }, [setVideoNotes]);
 
   // When topic changes, reset video selection
-  const handleTopicSelect = (idx) => {
+  const handleTopicSelect = useCallback((idx, topicName) => {
+    if (topicName === "Fullstack") {
+      setSelectedMainTopic("Fullstack");
+      setSelectedTopicIdx(null); // Clear any existing topic selection
+      setSelectedVideoIdx(null);
+    } else {
+      setSelectedMainTopic(null); // Reset main topic
+      setSelectedTopicIdx(idx);
+      setSelectedVideoIdx(0);
+    }
+  }, [setSelectedTopicIdx, setSelectedVideoIdx, setSelectedMainTopic]);
+
+  // Handle subtopic selection (e.g., "Fullstack (Tamil)")
+  const handleSubTopicSelect = useCallback((idx) => {
     setSelectedTopicIdx(idx);
     setSelectedVideoIdx(0);
-  };
+    setSelectedMainTopic(null); // Clear main topic after selecting subtopic
+  }, [setSelectedTopicIdx, setSelectedVideoIdx, setSelectedMainTopic]);
 
   // When level changes, reset topic/video selection
-  const handleLevelSelect = (e) => {
+  const handleLevelSelect = useCallback((e) => {
     setLevel(e.target.value);
     setSelectedTopicIdx(0);
-    // setSelectedVideoIdx(0); // This line is redundant
-    // Optionally clear completed videos for the new level, or keep them
-    // setCompletedVideos({});
-    // localStorage.removeItem("completedVideos");
-  };
+    setSelectedVideoIdx(0); // Explicitly reset video index too
+  }, [setLevel, setSelectedTopicIdx, setSelectedVideoIdx]);
+
 
   // Get current level's topics and selected video
-  const currentLevelData = levels.find((l) => l.value === level); // Renamed to avoid conflict
-  const topics = currentLevelData ? currentLevelData.videos : [];
-  const selectedTopic = topics[selectedTopicIdx] || topics[0];
-  const selectedVideo =
+  const currentLevelData = useMemo(() => levels.find((l) => l.value === level), [level]);
+  const topics = useMemo(() => (currentLevelData ? currentLevelData.videos : []), [currentLevelData]);
+  
+  const selectedTopic = useMemo(() => topics[selectedTopicIdx] || topics[0], [topics, selectedTopicIdx]);
+  
+  const selectedVideo = useMemo(() => (
     selectedTopic && selectedTopic.videos[selectedVideoIdx]
-      ? selectedTopic.videos[selectedVideoIdx]
-      : selectedTopic?.videos[0]; // Use optional chaining
+    ? selectedTopic.videos[selectedVideoIdx]
+    : selectedTopic?.videos[0]
+  ), [selectedTopic, selectedVideoIdx]);
 
   // Progress calculation for the CURRENT level
-  const totalVideosInCurrentLevel = topics.reduce((sum, t) => sum + t.videos.length, 0);
-  const completedCountInCurrentLevel = Object.keys(completedVideos).filter(videoId => {
-      // Check if the videoId belongs to the current level's topics
-      return topics.some(topic => topic.videos.some(video => video.videoId === videoId)) && completedVideos[videoId];
-  }).length;
+  const totalVideosInCurrentLevel = useMemo(() => (
+    topics.reduce((sum, t) => sum + t.videos.length, 0)
+  ), [topics]);
 
-  const progress = totalVideosInCurrentLevel
-    ? Math.min(100, Math.round((completedCountInCurrentLevel / totalVideosInCurrentLevel) * 100)) // Ensure progress doesn't exceed 100%
-    : 0;
+  const completedCountInCurrentLevel = useMemo(() => (
+    Object.keys(completedVideos).filter(videoId => 
+      topics.some(topic => topic.videos.some(video => video.videoId === videoId)) && completedVideos[videoId]
+    ).length
+  ), [completedVideos, topics]);
+
+  const progress = useMemo(() => (
+    totalVideosInCurrentLevel
+    ? Math.min(100, Math.round((completedCountInCurrentLevel / totalVideosInCurrentLevel) * 100))
+    : 0
+  ), [completedCountInCurrentLevel, totalVideosInCurrentLevel]);
 
   // If user is not logged in, show the authentication form
   if (!user) {
@@ -857,7 +912,7 @@ function App() {
         {/* App Title */}
         <div className="flex items-center gap-3 mb-8">
           <span className="text-3xl md:text-4xl">🎓</span>
-          <span className="text-3xl md:text-4xl font-extrabold text-indigo-600 dark:text-indigo-300 drop-shadow-lg tracking-wide">
+          <span className="text-3xl md:text-4xl font-extrabold text-purple-600 dark:text-purple-400 drop-shadow-lg tracking-wide">
             StudyHub
           </span>
         </div>
@@ -865,7 +920,7 @@ function App() {
           onSubmit={handleAuth}
           className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-sm"
         >
-          <h2 className="text-xl font-bold text-indigo-600 dark:text-indigo-400 text-center mb-6">
+          <h2 className="text-xl font-bold text-purple-600 dark:text-purple-400 text-center mb-6">
             {authMode === "login" ? "Login" : "Register"}
           </h2>
           {authMode === "register" && (
@@ -904,13 +959,13 @@ function App() {
           )}
           <button
             type="submit"
-            className="w-full bg-indigo-500 text-white py-2 rounded hover:bg-indigo-600 transition"
+            className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 transition"
           >
             {authMode === "login" ? "Login" : "Register"}
           </button>
           <button
             type="button"
-            className="w-full text-sm text-indigo-600 dark:text-indigo-400 mt-4"
+            className="w-full text-sm text-purple-600 dark:text-purple-400 mt-4"
             onClick={() => {
               setAuthMode(authMode === "login" ? "register" : "login");
               setAuthError("");
@@ -927,32 +982,31 @@ function App() {
 
   // If user is logged in, render the main application layout with routes
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-50 via-pink-50 to-white dark:from-gray-900 dark:via-indigo-900 dark:to-indigo-800 transition-colors duration-300">
-      {/* Header - Render Header here to be global across all logged-in routes */}
-       <header className="fixed top-0 left-0 right-0 z-20 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 dark:from-gray-900 dark:via-indigo-900 dark:to-indigo-800 shadow-2xl">
+    <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
+      {/* Header */}
+       <header className="fixed top-0 left-0 right-0 z-20 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo and Title - Wrapped with Link */}
             <div className="flex items-center gap-x-4">
               <Link to="/" className="flex items-center gap-3">
                 <div> {/* Added div to ensure Link styles apply correctly if needed, or style Link directly */}
-                  <span className="text-2xl md:text-3xl">🎓</span>
-                  <span className="text-2xl md:text-3xl font-extrabold text-white drop-shadow-lg tracking-wide">
+                  <span className="text-2xl md:text-3xl">🎓</span> {/* Emoji can stay as is */}
+                  <span className="text-2xl md:text-3xl font-extrabold text-indigo-600 dark:text-white drop-shadow-lg tracking-wide">
                     StudyHub
                   </span>
                 </div>
               </Link>
-              
             </div>
             <div className="flex flex-col items-start md:items-center gap-1">
-              <span className="text-xs md:text-sm text-white font-semibold">
+              <span className="text-xs md:text-sm text-gray-700 dark:text-white font-semibold">
                 🔥 Streak: {streak} day{streak !== 1 ? "s" : ""}
               </span>
-              <span className="text-xs md:text-sm text-yellow-200 font-semibold">
+              <span className="text-xs md:text-sm text-orange-500 dark:text-yellow-300 font-semibold">
                 ⭐ XP: {xp}
               </span>
               {streak > 2 && (
-                <span className="text-xs text-green-200 italic">
+                <span className="text-xs text-green-500 dark:text-green-300 italic">
                   Keep it up! 🚀
                 </span>
               )}
@@ -960,13 +1014,13 @@ function App() {
             {/* Header Controls */}
             <div className="flex items-center space-x-4">
               {/* Dark Mode Toggle */}
-                {/* Home link for desktop */}
-                <Link to="/" className="hidden md:block text-white hover:text-indigo-200 transition-colors font-semibold">
-                  Home
-                </Link> 
+              {/* Home link for desktop */}
+              <Link to="/" className="hidden md:block text-gray-600 hover:text-indigo-600 dark:text-gray-300 dark:hover:text-white transition-colors font-semibold">
+                Home
+              </Link>
               <button
                 onClick={() => setDarkMode((prev) => !prev)}
-                className="p-2 rounded-full hover:bg-white/20 transition-colors text-white"
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/20 transition-colors text-gray-500 dark:text-gray-300"
                 aria-label="Toggle dark mode"
               >
                 {darkMode ? "🌙" : "☀️"}
@@ -990,7 +1044,7 @@ function App() {
               {/* Mobile Sidebar Toggle */}
               <button
                 onClick={() => setSidebarOpen((prev) => !prev)}
-                className="md:hidden p-2 rounded-md hover:bg-white/20 text-white"
+                className="md:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/20 text-gray-500 dark:text-gray-300"
               >
                 {sidebarOpen ? "✖" : "☰"}
               </button>
@@ -1055,7 +1109,6 @@ function App() {
           <Route path="/privacy" element={<main className="flex-1 p-4 md:p-8"><PrivacyPage /></main>} />
           <Route path="/cookies" element={<main className="flex-1 p-4 md:p-8"><CookiesPage /></main>} />
           <Route path="/admin/login" element={<main className="flex-1 p-4 md:p-8"><AdminLoginRequiredPage /></main>} />
-
           {/* Protected Admin Route */}
           <Route 
             path="/admin" 
