@@ -22,6 +22,13 @@ const TopicChoicePage = ({ handleMainTopicSelect }) => {
           />
         ))}
       </div>
+      <h2 className='text-3xl pb-3 text-center'>
+        🔥 If you want more courses, message "COURSE NAME" in our{" "}
+        <a href="https://t.me/YOUR_TELEGRAM_CHANNEL_USERNAME" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+          Telegram channel
+        </a>{" "}
+        ↓
+      </h2>
     </div>
   );
 };

@@ -597,7 +597,7 @@ const dataScienceTamilBeginnerVideos = [
     topic: "NumPy (Tamil)",
     videos: [
       { title: "NumPy in Tamil", url: "https://youtu.be/wYLzXozu_iQ?si=r5jrgK2OvznEkvCX", videoId: "wYLzXozu_iQ" },
-    ],
+    ],  
   },
 ];
 
@@ -625,6 +625,81 @@ const dataScienceTamilAdvancedVideos = [
   },
 ];
 
+// --- AI & ML DATA (NEW) ---
+const aiMlBeginnerVideos = [
+  {
+    topic: "Machine Learning Basics",
+    videos: [
+      { title: "Machine Learning for Everybody", url: "https://www.youtube.com/watch?v=i_LwzRVP7bg", videoId: "i_LwzRVP7bg" },
+      { title: "What is Machine Learning?", url: "https://www.youtube.com/watch?v=f_uwKZIAeM0", videoId: "f_uwKZIAeM0" },
+    ],
+  },
+  {
+    topic: "Deep Learning Intro",
+    videos: [
+      { title: "Deep Learning Simply Explained", url: "https://youtu.be/VyWAvY2CF9c?si=WNgOYc_E8sHzVogi", videoId: "VyWAvY2CF9c" },
+    ],
+  },
+];
+
+const aiMlIntermediateVideos = [
+  {
+    topic: "TensorFlow Tutorial",
+    videos: [
+      { title: "TensorFlow 2.0 Complete Course", url: "https://youtu.be/tPYj3fFJGjk?si=B0Mthh28_Sc7ZnRQ", videoId: "tPYj3fFJGjk" },
+    ],
+  },
+  {
+    topic: "PyTorch Basics",
+    videos: [
+      { title: "PyTorch for Deep Learning - Full Course", url: "https://youtu.be/BQ65aJPb5aM?si=U8n3FuBL2zz37OtR", videoId: "BQ65aJPb5aM" },
+    ],
+  },
+];
+
+const aiMlAdvancedVideos = [
+  { topic: "Advanced NLP", videos: [{ title: "Advanced NLP with Deep Learning", url: "https://youtu.be/kqg-c3ACxgk?si=eeZ2jNaru6TaRdCk", videoId: "kqg-c3ACxgk" }] },
+];
+
+// --- TAMIL AI & ML DATA (NEW) ---
+const aiMlTamilBeginnerVideos = [
+  {
+    topic: "Machine Learning Basics (Tamil)",
+    videos: [
+      { title: "Machine Learning Basics in Tamil", url: "https://youtu.be/rn8Yp6otAh8?si=WlXoSlExa_-EusCp", videoId: "rn8Yp6otAh8" },
+    ],
+  },
+  {
+    topic: "Deep Learning Intro (Tamil)",
+    videos: [
+      { title: "Deep Learning Basics in Tamil", url: "https://youtu.be/6fzjJ690tpQ?si=A_MrHvxuACjuIAbT", videoId: "6fzjJ690tpQ" },
+    ],
+  },
+];
+
+const aiMlTamilIntermediateVideos = [
+    {
+        topic: "TensorFlow (Tamil)",
+        videos: [
+            { title: "TensorFlow Basics in Tamil", url: "https://youtu.be/yqOkARrH0g8?si=mQ4Sdc-QHeW7-0WQ", videoId: "yqOkARrH0g8" },
+        ],
+    },
+    {
+        topic: "PyTorch (Tamil)",
+        videos: [
+            { title: "PyTorch Basics in Tamil", url: "https://youtu.be/4dNmxXl4QvY?si=lMiW7cmF7GSdMtfu", videoId: "4dNmxXl4QvY" },
+        ],
+    },
+];
+
+const aiMlTamilAdvancedVideos = [
+    {
+        topic: "Advanced NLP (Tamil)",
+        videos: [
+        { title: "Advanced NLP full course in Tamil", url: "https://youtu.be/uP7JxMm4uZQ?si=l7q_5khJzPuyRedH", videoId: "uP7JxMm4uZQ" },
+        ],
+    },
+ ]
 // Main export structure
 export const mainTopicsData = {
   "Fullstack": {
@@ -679,9 +754,20 @@ export const mainTopicsData = {
         icon: "🤖",
         description: "Explore artificial intelligence and machine learning.",
         levels: {
-        beginner: { value: "beginner", label: "Beginner", videos: [] }, // Placeholder for now
-        intermediate: { value: "intermediate", label: "Intermediate", videos: [] }, // Placeholder for now
-        advanced: { value: "advanced", label: "Advanced", videos: [] }, // Placeholder for now
+        beginner: { value: "beginner", label: "Beginner", videos: aiMlBeginnerVideos },
+        intermediate: { value: "intermediate", label: "Intermediate", videos: aiMlIntermediateVideos },
+        advanced: { value: "advanced", label: "Advanced", videos: aiMlAdvancedVideos },
         },
-    },  
+    }, 
+    "AI & ML (Tamil)": {
+        key: "AI & ML (Tamil)",
+        label: "AI & Machine Learning (Tamil)",
+        icon: "🤖",
+        description: "Explore AI and machine learning in Tamil.",
+        levels: {
+            beginner: { value: "beginner", label: "Beginner", videos: aiMlTamilBeginnerVideos },
+            intermediate: { value: "intermediate", label: "Intermediate", videos: aiMlTamilIntermediateVideos },
+            advanced: { value: "advanced", label: "Advanced", videos: aiMlTamilAdvancedVideos },
+        },
+    }, 
 };

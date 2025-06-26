@@ -44,10 +44,19 @@ app.post('/api/register', async (req, res) => {
     const user = new User({ username, email, password: hashedPassword });
     await user.save();
     
-    const token = jwt.sign({ userId: user._id }, 'your-secret-key');
-    res.json({ token, user: { username, email } });
+const token = jwt.sign({ userId: user._id }, 'your-secret-key');
+res.json({ token, user: { username, email } });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Registration error:', error); // Always log the full error for debugging
+    if (error.code === 11000 && error.keyPattern && error.keyPattern.email) {
+      return res.status(400).json({ error: 'Email already registered. Please use a different email or log in.' });
+    } else if (error.name === 'ValidationError') {
+      // Handle Mongoose validation errors (e.g., missing required fields)
+      const messages = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ error: messages.join(', ') });
+    }
+    // Generic fallback for any other unexpected errors
+    res.status(400).json({ error: error.message || 'An unknown error occurred during registration.' });
   }
 });
 
@@ -67,7 +76,12 @@ app.post('/api/login', async (req, res) => {
     const token = jwt.sign({ userId: user._id }, 'your-secret-key');
     res.json({ token, user: { username: user.username, email } });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Login error:', error); // Always log the full error for debugging
+    // For login, a generic "Invalid credentials" is often preferred for security
+    // to avoid revealing whether the email exists or the password is just wrong.
+    // However, if you want to be more specific for debugging, you can use error.message.
+    // For now, let's keep it simple and user-friendly.
+    res.status(400).json({ error: 'Invalid email or password.' });
   }
 });
 

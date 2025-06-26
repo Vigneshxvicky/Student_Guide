@@ -36,8 +36,8 @@ const Footer = () => {
               <h5 className="font-semibold mb-3 text-sky-900 dark:text-white">Connect</h5>
                 <ul className="space-y-1">
                             <li>
-                <Link to="https://t.me/StudyHubFeedback" target="_blank" rel="noopener noreferrer" className="hover:text-sky-900 dark:hover:text-sky-100 transition-colors duration-200">
-                  Telegram
+                <Link to="https://t.me/StudyHubFeedback" target="_blank" rel="noopener noreferrer" className="hover:text-sky-900 text-3xl dark:hover:text-sky-100 transition-colors duration-200">
+                  🚀 Telegram
                 </Link>
               </li>
             </ul>
