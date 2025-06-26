@@ -10,7 +10,14 @@ import { OAuth2Client } from 'google-auth-library'; // Import Google Auth Librar
 dotenv.config();  // Load environment variables from .env file
 
 const app = express();
-app.use(cors());
+
+// CORS configuration for production
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Allow your frontend URL
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
+
 app.use(express.json());
 
 // Add Cross-Origin-Opener-Policy header to allow Google login popups
