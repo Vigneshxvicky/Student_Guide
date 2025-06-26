@@ -5,11 +5,19 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import fetch from 'node-fetch';  // If using Node 18+, native fetch is available, else install node-fetch
 import dotenv from 'dotenv';
+import { OAuth2Client } from 'google-auth-library'; // Import Google Auth Library
+
 dotenv.config();  // Load environment variables from .env file
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Add Cross-Origin-Opener-Policy header to allow Google login popups
+app.use((req, res, next) => {
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  next();
+});
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
@@ -21,11 +29,20 @@ mongoose.connect(process.env.MONGODB_URI, {
   console.error('MongoDB connection error:', err);
 });
 // User Schema
-const userSchema = new mongoose.Schema({
-  username: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true }
-});
+const userSchema = new mongoose.Schema(
+  {
+    username: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: false } // Password can be optional for Google users
+  },
+  { timestamps: true } // Added for better tracking, optional
+);
+
+
+// Initialize Google OAuth2Client
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'; // Use environment variable for JWT secret
+
 
 const User = mongoose.model('User', userSchema);
 
@@ -40,11 +57,15 @@ app.get('/api/test', async (req, res) => {
 app.post('/api/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
+        if (!password) { // Ensure password is provided for local registration
+      return res.status(400).json({ error: 'Password is required for local registration.' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({ username, email, password: hashedPassword });
     await user.save();
     
-const token = jwt.sign({ userId: user._id }, 'your-secret-key');
+const token = jwt.sign({ userId: user._id }, JWT_SECRET);
 res.json({ token, user: { username, email } });
   } catch (error) {
     console.error('Registration error:', error); // Always log the full error for debugging
@@ -65,15 +86,20 @@ app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ error: 'User not found' });
+      return res.status(401).json({ error: 'Invalid email or password.' });
+    }
+
+    // Check if user has a password set (i.e., not a Google-only user)
+    if (!user.password) {
+      return res.status(401).json({ error: 'This account was registered with Google. Please sign in with Google.' });
     }
     
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
-      return res.status(401).json({ error: 'Invalid password' });
+      return res.status(401).json({ error: 'Invalid email or password.' });
     }
     
-    const token = jwt.sign({ userId: user._id }, 'your-secret-key');
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET);
     res.json({ token, user: { username: user.username, email } });
   } catch (error) {
     console.error('Login error:', error); // Always log the full error for debugging
@@ -85,7 +111,52 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-const YOUTUBE_API_KEY = 'AIzaSyAdKb0vkmqJHQI011IGoeBNnDEROcWjaX8';  // Replace with your real API key
+// Google Auth endpoint
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    const { id_token } = req.body;
+
+    if (!id_token) {
+      return res.status(400).json({ error: 'Google ID token is missing.' });
+    }
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: id_token,
+      audience: process.env.GOOGLE_CLIENT_ID, // Specify the CLIENT_ID of the app that accesses the backend
+    });
+    const payload = ticket.getPayload();
+    const { email, name: username, picture } = payload; // Extract user info
+
+    if (!email) {
+      return res.status(400).json({ error: 'Google ID token does not contain an email address.' });
+    }
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // If user doesn't exist, create a new one.
+      user = new User({
+        username: username || email.split('@')[0], // Use name from Google, or derive from email
+        email: email,
+        password: null // Explicitly set password to null for Google-only accounts
+      });
+      await user.save();
+    }
+
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET);
+    res.json({ token, user: { username: user.username, email: user.email, picture } });
+
+  } catch (error) {
+    console.error('Google Auth error:', error);
+    if (error.message.includes('Invalid ID Token')) {
+      return res.status(401).json({ error: 'Invalid Google ID token.' });
+    }
+    res.status(500).json({ error: 'Failed to authenticate with Google.' });
+  }
+});
+
+const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY; // Use environment variable for YouTube API key
+
 
 app.get('/api/youtube/tutorials', async (req, res) => {
   try {
@@ -134,7 +205,7 @@ app.get('/api/youtube/tutorials', async (req, res) => {
 app.put('/api/user/username', async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
-    const decoded = jwt.verify(token, 'your-secret-key');
+    const decoded = jwt.verify(token, JWT_SECRET); // Use JWT_SECRET
     const user = await User.findByIdAndUpdate(
       decoded.userId,
       { username: req.body.username },

@@ -1,24 +1,33 @@
-import axios from "axios";
+// Assuming this file already exists with login and register functions
+// If not, create it with the following content:
 
-// Define your local backend base URL
-const LOCAL_API_URL = "http://localhost:5000"; // Or your specific local backend URL
+import axios from 'axios';
 
-export async function login(authForm) {
+const API_URL = 'http://localhost:5000/api'; // Adjust if your backend URL is different
+
+export const login = async (credentials) => {
   try {
-    const response = await axios.post(`${LOCAL_API_URL}/api/login`, authForm);
+    const response = await axios.post(`${API_URL}/login`, credentials);
     return response.data;
   } catch (error) {
-    // Re-throw the error to be caught in the component
     throw error;
   }
-}
+};
 
-export async function register(authForm) {
+export const register = async (userData) => {
   try {
-    const response = await axios.post(`${LOCAL_API_URL}/api/register`, authForm);
+    const response = await axios.post(`${API_URL}/register`, userData);
     return response.data;
   } catch (error) {
-    // Re-throw the error to be caught in the component
     throw error;
   }
-}
+};
+
+export const googleLogin = async (idToken) => {
+  try {
+    const response = await axios.post(`${API_URL}/auth/google`, { id_token: idToken });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

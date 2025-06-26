@@ -5,34 +5,17 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-// import axios from "axios"; // Not used
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom"; // Import useNavigate
 import "./App.css";
 import confetti from "canvas-confetti";
 import { updateUsername } from "./utils/updateUsername";
-import { login, register } from "./utils/auth";
+import { login, register } from "./utils/auth"; // Assuming these handle local auth
 import { updateStreak } from "./utils/streak";
 import useLocalStorage from "./hooks/useLocalStorage"; // Import the custom hook
 import { mainTopicsData } from "./data"; // Import main topics data
-import Footer from "./Footer";
+import AuthPage from "./pages/AuthPage"; // This is actually AdminPage.jsx content
+import AuthenticatedLayout from "./AuthenticatedLayout"; // New component
 
-// Page Imports
-import AboutPage from "./pages/AboutPage";
-import ContactPage from "./pages/ContactPage";
-import CareersPage from "./pages/CareersPage";
-import BlogPage from "./pages/BlogPage";
-import HelpPage from "./pages/HelpPage";
-import AffiliatesPage from "./pages/AffiliatesPage";
-import TermsPage from "./pages/TermsPage";
-import PrivacyPage from "./pages/PrivacyPage";
-import CookiesPage from "./pages/CookiesPage";
-import AdminPage from "./pages/AdminPage"; // Import AdminPage
-import ProtectedRouteAdmin from "./components/ProtectedRouteAdmin";
-import AdminLoginRequiredPage from "./pages/AdminLoginRequiredPage"; // Import AdminLoginRequiredPage
-import AuthPage from "./pages/AuthPage";
-import DashboardPage from "./pages/DashboardPage";
-import TopicChoicePage from "./pages/TopicChoicePage";
-import Header from "./components/Header";
 
 function App() {
   // All state variables are managed here in the top-level App component
@@ -81,7 +64,8 @@ function App() {
   useEffect(() => {
     const savedUser = localStorage.getItem("ademyUser");
     if (savedUser) setUser(JSON.parse(savedUser));
-  }, []);
+    // No navigation here, routing will handle it
+   }, []);
 
   // Quote effect, only set quote if user is logged in and on the dashboard route
   useEffect(() => {
@@ -225,6 +209,34 @@ function App() {
       setAuthForm({ username: "", email: "", password: "" });
     } catch (error) {
       setAuthError(error.response?.data?.error || "An error occurred");
+    }
+  };
+
+  const handleGoogleAuth = async (idToken) => {
+    setAuthError("");
+    try {
+      // Ensure your .env file has VITE_BACKEND_URL=http://localhost:5000 (or your backend URL)
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/google`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id_token: idToken }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Google authentication failed.");
+      }
+      setUser(data.user);
+      localStorage.setItem("ademyUser", JSON.stringify(data.user));
+      localStorage.setItem("ademyToken", data.token);
+      // navigate('/'); // No need to navigate here, the Route will handle it
+
+    } catch (error) {
+      console.error("Google Auth API error:", error);
+      setAuthError(error.message || "An error occurred during Google authentication.");
     }
   };
 
@@ -427,193 +439,95 @@ function App() {
     [completedCountInCurrentLevel, totalVideosInCurrentLevel]
   );
 
-  // If user is not logged in, show the authentication form
-  if (!user) {
-    return (
-      <AuthPage
-        authMode={authMode}
-        setAuthMode={setAuthMode}
-        authForm={authForm}
-        handleAuthInput={handleAuthInput}
-        handleAuth={handleAuth}
-        authError={authError}
-        setAuthError={setAuthError}
-      />
-    );
-  }
-
-  // If user is logged in, render the main application layout with routes
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
-      {/* Header */}
-      <Header
-        user={user}
-        setUser={setUser}
-        streak={streak}
-        xp={xp}
-        darkMode={darkMode}
-        setDarkMode={setDarkMode}
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
-        profileMenuOpen={profileMenuOpen}
-        setProfileMenuOpen={setProfileMenuOpen}
-        editingUsername={editingUsername}
-        setEditingUsername={setEditingUsername}
-        newUsername={newUsername}
-        setNewUsername={setNewUsername}
-        handleUsernameSave={handleUsernameSave}
-        handleLogout={handleLogout}
-        profileMenuRef={profileMenuRef}
-        showBackButton={!showTopicChoice}
-        onBackClick={handleGoBackToCourses}
+    <Routes>
+      {/* Root path: Redirects based on authentication status */}
+      <Route
+        path="/"
+        element={
+          user ? (
+            <Navigate to="/app" replace /> // Logged in: go to /app
+          ) : (
+            <Navigate to="/login" replace /> // Not logged in: go to /login
+          )
+        }
       />
 
-      {showTopicChoice ? (
-        <TopicChoicePage handleMainTopicSelect={handleMainTopicSelect} />
-      ) : (
-        /* Main Content Area controlled by Routes */
-        <div className="flex-1 flex mt-16">
-          {" "}
-          {/* Added mt-16 to offset fixed header */}
-          <Routes>
-            {/* <GAListener /> */}
-            {/* Route for the main dashboard content */}
-            {/* DashboardContent includes its own Main and Sidebar */}
-            <Route
-              path="/"
-              element={
-                selectedMainTopic && (
-                  <DashboardPage
-                    level={level}
-                    levels={levelsForCurrentTopic}
-                    handleLevelSelect={handleLevelSelect}
-                    completedVideos={completedVideos}
-                    selectedTopicIdx={selectedTopicIdx}
-                    sidebarOpen={sidebarOpen}
-                    quote={quote}
-                    bookmarkedVideos={bookmarkedVideos}
-                    videoNotes={videoNotes}
-                    currentNoteText={currentNoteText}
-                    setCurrentNoteText={setCurrentNoteText}
-                    currentNoteTimestamp={currentNoteTimestamp}
-                    setCurrentNoteTimestamp={setCurrentNoteTimestamp}
-                    toggleCompleted={toggleCompleted}
-                    toggleBookmark={toggleBookmark}
-                    handleAddNote={handleAddNote}
-                    handleDeleteNote={handleDeleteNote}
-                    handleTopicSelect={handleTopicSelect}
-                    topics={topics}
-                    selectedVideo={selectedVideo}
-                    progress={progress}
-                  />
-                )
-              }
+      {/* Public route for authentication */}
+      <Route
+        path="/login"
+        element={
+          user ? (
+            <Navigate to="/app" replace /> // Already logged in: go to /app
+          ) : (
+            <AuthPage
+              authMode={authMode}
+              setAuthMode={setAuthMode}
+              authForm={authForm}
+              handleAuthInput={handleAuthInput}
+              handleAuth={handleAuth}
+              authError={authError}
+              setAuthError={setAuthError}
+              handleGoogleAuth={handleGoogleAuth} // Ensure this prop is passed and used in AuthPage
             />
+          )
+        }
+      />
 
-            {/* Routes for footer pages */}
-            {/* These pages will render within the main flex container, below the header */}
-            {/* The mt-16 on the main container handles the fixed header offset */}
-            <Route
-              path="/about"
-              element={
-                <main className="flex-1 p-4 md:p-8">
-                  <AboutPage />
-                </main>
-              }
+      {/* Protected routes - all other paths */}
+      <Route
+        path="/app/*" // All main app routes start with /app
+        element={
+          user ? (
+            <AuthenticatedLayout
+              user={user}
+              setUser={setUser}
+              streak={streak}
+              xp={xp}
+              darkMode={darkMode}
+              setDarkMode={setDarkMode}
+              sidebarOpen={sidebarOpen}
+              setSidebarOpen={setSidebarOpen}
+              profileMenuOpen={profileMenuOpen}
+              setProfileMenuOpen={setProfileMenuOpen}
+              editingUsername={editingUsername}
+              setEditingUsername={setEditingUsername}
+              newUsername={newUsername}
+              setNewUsername={setNewUsername}
+              handleUsernameSave={handleUsernameSave}
+              handleLogout={handleLogout}
+              profileMenuRef={profileMenuRef}
+              showTopicChoice={showTopicChoice}
+              handleGoBackToCourses={handleGoBackToCourses}
+              handleMainTopicSelect={handleMainTopicSelect}
+              selectedMainTopic={selectedMainTopic}
+              level={level}
+              levelsForCurrentTopic={levelsForCurrentTopic}
+              handleLevelSelect={handleLevelSelect}
+              completedVideos={completedVideos}
+              selectedTopicIdx={selectedTopicIdx}
+              quote={quote}
+              bookmarkedVideos={bookmarkedVideos}
+              videoNotes={videoNotes}
+              currentNoteText={currentNoteText}
+              setCurrentNoteText={setCurrentNoteText}
+              currentNoteTimestamp={currentNoteTimestamp}
+              setCurrentNoteTimestamp={setCurrentNoteTimestamp}
+              toggleCompleted={toggleCompleted}
+              toggleBookmark={toggleBookmark}
+              handleAddNote={handleAddNote}
+              handleDeleteNote={handleDeleteNote}
+              handleTopicSelect={handleTopicSelect}
+              topics={topics}
+              selectedVideo={selectedVideo}
+              progress={progress}
             />
-            <Route
-              path="/contact"
-              element={
-                <main className="flex-1 p-4 md:p-8">
-                  <ContactPage />
-                </main>
-              }
-            />
-            <Route
-              path="/careers"
-              element={
-                <main className="flex-1 p-4 md:p-8">
-                  <CareersPage />
-                </main>
-              }
-            />
-            <Route
-              path="/blog"
-              element={
-                <main className="flex-1 p-4 md:p-8">
-                  <BlogPage />
-                </main>
-              }
-            />
-            <Route
-              path="/help"
-              element={
-                <main className="flex-1 p-4 md:p-8">
-                  <HelpPage />
-                </main>
-              }
-            />
-            <Route
-              path="/affiliates"
-              element={
-                <main className="flex-1 p-4 md:p-8">
-                  <AffiliatesPage />
-                </main>
-              }
-            />
-            <Route
-              path="/terms"
-              element={
-                <main className="flex-1 p-4 md:p-8">
-                  <TermsPage />
-                </main>
-              }
-            />
-            <Route
-              path="/privacy"
-              element={
-                <main className="flex-1 p-4 md:p-8">
-                  <PrivacyPage />
-                </main>
-              }
-            />
-            <Route
-              path="/cookies"
-              element={
-                <main className="flex-1 p-4 md:p-8">
-                  <CookiesPage />
-                </main>
-              }
-            />
-            <Route
-              path="/admin/login"
-              element={
-                <main className="flex-1 p-4 md:p-8">
-                  <AdminLoginRequiredPage />
-                </main>
-              }
-            />
-            {/* Protected Admin Route */}
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRouteAdmin user={user}>
-                  <main className="flex-1 p-4 md:p-8">
-                    <AdminPage />
-                  </main>
-                </ProtectedRouteAdmin>
-              }
-            />
-
-            {/* Redirect any unknown paths to home */}
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </div>
-      )}
-
-      {/* Footer - Render Footer here to be global across all logged-in routes */}
-      <Footer />
-    </div>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+    </Routes>
   );
 }
 export default App;
