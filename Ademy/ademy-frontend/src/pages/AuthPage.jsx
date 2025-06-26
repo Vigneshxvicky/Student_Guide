@@ -1,7 +1,7 @@
 // d:\VICKY_PERSONAL PROJECT\Student_Guide\Ademy\ademy-frontend\src\AuthPage.jsx (Example)
 
-import React from 'react';
-import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import React from "react";
+import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 
 function AuthPage({
   authMode,
@@ -11,11 +11,12 @@ function AuthPage({
   handleAuth,
   authError,
   setAuthError,
-  handleGoogleAuth // New prop for Google auth
+  handleGoogleAuth, // New prop for Google auth
 }) {
   const isLogin = authMode === "login";
   // Replace with your actual Google Client ID (or load from env)
-  const GOOGLE_CLIENT_ID = "758885795298-g81qvv2iq8g5civ78cp7rbj0i5n699j1.apps.googleusercontent.com"; 
+  const GOOGLE_CLIENT_ID =
+    "758885795298-g81qvv2iq8g5civ78cp7rbj0i5n699j1.apps.googleusercontent.com";
 
   const handleGoogleSuccess = (credentialResponse) => {
     console.log("Google Login Success:", credentialResponse);
@@ -30,12 +31,12 @@ function AuthPage({
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
       <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md w-full max-w-md">
         <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-6">
-          {isLogin ? "Login to Ademy" : "Register for Ademy"}
+          {isLogin ? "Login to StudyHub" : "Register for StudyHub"}
         </h2>
         {authError && (
           <p className="text-red-500 text-center mb-4">{authError}</p>
         )}
-      <form onSubmit={handleAuth}>
+        <form onSubmit={handleAuth}>
           {!isLogin && (
             <div className="mb-4">
               <label
@@ -97,7 +98,7 @@ function AuthPage({
               {isLogin ? "Login" : "Register"}
             </button>
           </div>
-      </form>
+        </form>
         <div className="mt-6 text-center">
           <p className="text-gray-700 dark:text-gray-300">
             {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
@@ -115,26 +116,24 @@ function AuthPage({
 
         {/* Google Login Button */}
         <div className="mt-6 flex justify-center">
-          
-        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-          <GoogleLogin
-
-            onSuccess={handleGoogleSuccess}
-            onError={handleGoogleError}
-            // type='standard' // or 'icon'
-            // theme='outline' // or 'filled_blue', 'filled_black'
-            // size='large' // or 'medium', 'small'
-            // className="w-full max-w-xs" // Adjust width as needed
-            // text='Sign in with Google' // Customize button text
-            // logo_alignment='left' // or 'right'
-            // You can customize the button's appearance here
-            type="standard" // or "icon"
-            theme="filled_black" // or "filled_blue", "filled_black"
-            size="large" // or "medium", "small"
-          />
-        </GoogleOAuthProvider>
+          <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              // type='standard' // or 'icon'
+              // theme='outline' // or 'filled_blue', 'filled_black'
+              // size='large' // or 'medium', 'small'
+              // className="w-full max-w-xs" // Adjust width as needed
+              // text='Sign in with Google' // Customize button text
+              // logo_alignment='left' // or 'right'
+              // You can customize the button's appearance here
+              type="standard" // or "icon"
+              theme="filled_black" // or "filled_blue", "filled_black"
+              size="large" // or "medium", "small"
+            />
+          </GoogleOAuthProvider>
+        </div>
       </div>
-    </div>
     </div>
   );
 }
